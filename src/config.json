@@ -1,0 +1,10 @@
+{
+  "port": 3000,
+  "wallet": "f3c94aa22f7907d107298f1acb7c69442f602d556191c2ab53250de658495be4",
+  "exchange": {
+    "secret": "exchange-secret-password"
+  },
+  "miner": {
+    "secret": "miner-secret-password"
+  }
+}
