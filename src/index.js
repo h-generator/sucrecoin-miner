@@ -1,10 +1,13 @@
-const { encoder } = require('./components');
-const { miner } = require('./config.json');
+const { interval } = require('rxjs');
+const { encoder, miner } = require('./components');
+const config = require('./config.json');
+
+const source = interval(10000);
 
 (async () => {
-  encoder.setSecret(miner.secret);
+  encoder.setSecret(config.miner.secret);
+  miner.setConfig(config.miner.server);
+  miner.startClient();
 })();
 
-setInterval(() => {
-  console.log('heartbeat');
-}, 10000);
+source.subscribe((o) => console.log('heartbeat:', o));

@@ -5,6 +5,10 @@
     "secret": "exchange-secret-password"
   },
   "miner": {
+    "server": {
+      "port": 8124,
+      "path": "localhost"
+    },
     "secret": "miner-secret-password"
   }
 }

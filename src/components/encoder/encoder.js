@@ -1,6 +1,7 @@
-const { randomBytes, createCipheriv, createDecipheriv } = require('crypto');
+const { randomBytes, createCipheriv, createDecipheriv, scryptSync } = require('crypto');
+const { encode } = require('querystring');
 const { miner } = require('../../config');
-const { IV, ALGORITHM, ENCODE_TYPE } = require('./constants');
+const { IV_LENGTH, ALGORITHM, ENCODE_TYPE } = require('./constants');
 
 let _secret = null;
 
@@ -15,8 +16,9 @@ const encrypt = (data) => {
   if (!data) {
     throw new Error('data is undefined');
   }
-  const vector = randomBytes(IV);
-  const cipher = createCipheriv(ALGORITHM, _secret, vector);
+  const vector = randomBytes(16);
+  const key = scryptSync(_secret, 'salt', 24);
+  const cipher = createCipheriv(ALGORITHM, key, vector);
   const message = cipher.update(JSON.stringify(data), ENCODE_TYPE.UTF8);
   return  [
     vector.toString(ENCODE_TYPE.HEX),
@@ -32,10 +34,11 @@ const decrypt = (encrypted) => {
     throw new Error('encrypted is undefined');
   }
   let data = encrypted.split(':');
-  let iv = Buffer.from(data.shift(), ENCODE_TYPE.HEX);
-  const decipher = createDecipheriv(ALGORITHM, _secret, iv);
-  let decrypted = decipher.update(data.shift(), ENCODE_TYPE.HEX, ENCODE_TYPE.HEX);
-  decrypted += decipher.final(ENCODE_TYPE.HEX);
+  let vector = Buffer.from(data.shift(), ENCODE_TYPE.HEX);
+  const key = scryptSync(_secret, 'salt', 24);
+  const decipher = createDecipheriv(ALGORITHM, key, vector);
+  let decrypted = decipher.update(data.shift(), ENCODE_TYPE.HEX, ENCODE_TYPE.UTF8);
+  decrypted += decipher.final(ENCODE_TYPE.UTF8);
   return JSON.parse(decrypted);
 };
 

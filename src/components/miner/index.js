@@ -1,5 +1,3 @@
-const { client } = require('./miner');
+const miner = require('./miner');
 
-module.exports = {
-  client
-};
+module.exports = miner;

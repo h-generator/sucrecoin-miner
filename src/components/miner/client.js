@@ -1,65 +1,52 @@
 const net = require('net');
-const {
-  scrypt,
-  randomFill,
-  randomBytes,
-  createCipheriv,
-} = require('crypto');
-const config = require('../../config.json');
+const { fromEvent } = require('rxjs');
+const { tap, map } = require('rxjs/operators');
+const { listener, setClient } = require('./listener');
+const encoder = require('../encoder');
+const { EVENTS } = require('./events.constants');
 
-const IV = 16;
-const defaultMessage = {
-  data: 'miner connected',
-  config: {
-    version: 1
+var client = new net.Socket();
+const source = fromEvent(client, EVENTS.DATA);
+
+client.on(EVENTS.CONNECT, () => {
+  console.log('successful server connection');
+  setClient(client);
+  //socket.write(encoder.encrypt({ _id: socket._id }));
+  //client.write(encoder.encrypt(defaultMessage));
+});
+
+const validator = (message) => {
+  if (!Buffer.isBuffer(message)) {
+    throw new Error('message is indefined');
   }
 };
-const algorithm = 'aes-192-cbc';
 
-// const encrypt = (data) => {
-//   if (!data) {
-//     throw new Error('data is undefined');
-//   }
-//   const vector = randomBytes(IV);
-//   const cipher = createCipheriv(algorithm, config.exchange.secret, vector);
-//   const message = cipher.update(JSON.stringify(data), 'utf8');
-//   return  [
-//     vector.toString('hex'),
-//     Buffer.concat([message, cipher.final()]).toString('hex')
-//   ].join(':');
-// };
-
-const client = net.createConnection({ port: 8124 }, () => {
-  console.log('server connection');
-  client.write(encrypt(defaultMessage));
-});
-
-client.on('data', (data) => {
-  try {
-    console.log("server message", data.toString());
-  } catch (err) {
-    console.log(err);
+const decrypt = (message) => {
+  const encrypted = message.toString();
+  const data = encoder.decrypt(encrypted);
+  if (!data.type) {
+    throw new Error('wrong server message type');
   }
-  //client.end();
-});
-
-client.on('close', (e) => {
-  console.log('connection closed');
-  const interval = setInterval(() => { 
-    client.connect({ port: 8124 }, () => {
-      console.log('server reconnection');
-      client.write(encrypt(defaultMessage));
-      clearInterval(interval);
-    });    
-  }, 2000);
-});
-
-// client.setTimeout(3000);
-// client.on('timeout', () => {
-//   console.log('socket timeout');
-//   client.end();
-// });
-
-module.exports = {
-  client
+  return data;
 };
+
+const example = source.pipe(
+  tap((message) => validator(message)),
+  map((message) => decrypt(message)),
+  map((data) => listener(data)),
+);
+
+const validMessages = (res) => {
+  console.log(res);
+};
+
+const errorMessage = (err) => {
+  console.log(err);
+};
+
+const subscribe = example.subscribe({
+  res: (res) => validMessages(res),
+  error: (err) => errorMessage(err)
+});
+
+module.exports = client;
