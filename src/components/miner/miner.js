@@ -1,6 +1,7 @@
 const client = require('./client');
 const encoder = require('../encoder');
 const { EVENTS, RECONNECT_TIMEOUT } = require('./events.constants');
+const { timeout } = require('rxjs/operators');
 
 let _config = null;
 
@@ -15,15 +16,22 @@ const startClient = () => {
   });
 };
 
-client.on(EVENTS.CLOSE, (e) => {
-  const interval = setInterval(() => {
-    console.log('successful server reconnection');
-    client.connect({ port: 8124 }, () => {
-      console.log('successful server reconnection');
-      //client.write(encrypt(defaultMessage));
-      clearInterval(interval);
-    });   
-  }, RECONNECT_TIMEOUT);
+client.on(EVENTS.ERROR, (data) => {
+  console.log(data.toString());
+  client.end();
+});
+
+const intervalCallback = () => {
+  client.connect({
+    port: _config.port,
+    host: _config.host,
+  });
+ };
+
+client.on(EVENTS.CLOSE, () => {
+  console.log('reconnecting...');
+  //intervalCallback();
+  setTimeout(intervalCallback, RECONNECT_TIMEOUT);
 });
 
 module.exports = { setConfig, startClient };

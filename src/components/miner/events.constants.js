@@ -7,4 +7,4 @@ module.exports.EVENTS = {
   DATA: 'data',
   END: 'end',
 };
-module.exports.RECONNECT_TIMEOUT = 2000;
+module.exports.RECONNECT_TIMEOUT = 5000;
