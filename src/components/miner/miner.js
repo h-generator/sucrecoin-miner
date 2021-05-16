@@ -30,7 +30,6 @@ const intervalCallback = () => {
 
 client.on(EVENTS.CLOSE, () => {
   console.log('reconnecting...');
-  //intervalCallback();
   setTimeout(intervalCallback, RECONNECT_TIMEOUT);
 });
 

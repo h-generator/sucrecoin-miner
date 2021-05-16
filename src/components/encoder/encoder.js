@@ -1,6 +1,4 @@
 const { randomBytes, createCipheriv, createDecipheriv, scryptSync } = require('crypto');
-const { encode } = require('querystring');
-const { miner } = require('../../config');
 const { IV_LENGTH, ALGORITHM, ENCODE_TYPE } = require('./constants');
 
 let _secret = null;
@@ -16,7 +14,7 @@ const encrypt = (data) => {
   if (!data) {
     throw new Error('data is undefined');
   }
-  const vector = randomBytes(16);
+  const vector = randomBytes(IV_LENGTH);
   const key = scryptSync(_secret, 'salt', 24);
   const cipher = createCipheriv(ALGORITHM, key, vector);
   const message = cipher.update(JSON.stringify(data), ENCODE_TYPE.UTF8);

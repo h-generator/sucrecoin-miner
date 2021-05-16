@@ -11,8 +11,6 @@ const source = fromEvent(client, EVENTS.DATA);
 client.on(EVENTS.CONNECT, () => {
   console.log('successful server connection');
   setClient(client);
-  //socket.write(encoder.encrypt({ _id: socket._id }));
-  //client.write(encoder.encrypt(defaultMessage));
 });
 
 const validator = (message) => {
@@ -27,10 +25,11 @@ const decrypt = (message) => {
   if (!data.type) {
     throw new Error('wrong server message type');
   }
+  console.log(`server message: ${data.type}`);
   return data;
 };
 
-const example = source.pipe(
+const sourcePipe = source.pipe(
   tap((message) => validator(message)),
   map((message) => decrypt(message)),
   map((data) => listener(data)),
@@ -44,7 +43,7 @@ const errorMessage = (err) => {
   console.log(err);
 };
 
-const subscribe = example.subscribe({
+sourcePipe.subscribe({
   res: (res) => validMessages(res),
   error: (err) => errorMessage(err)
 });
